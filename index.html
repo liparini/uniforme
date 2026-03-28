@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controle de Uniforme</title>
+  <title>Controle de Premiações</title>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -30,7 +30,7 @@
     }
 
     header {
-      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      background: linear-gradient(135deg, #0f766e, #2563eb);
       color: #fff;
       padding: 24px;
       box-shadow: var(--shadow);
@@ -47,7 +47,7 @@
     }
 
     .container {
-      width: min(1200px, calc(100% - 32px));
+      width: min(1320px, calc(100% - 32px));
       margin: 24px auto 40px;
       display: grid;
       grid-template-columns: 360px 1fr;
@@ -137,6 +137,13 @@
       font-weight: bold;
     }
 
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -158,13 +165,15 @@
     }
 
     .metric strong {
-      font-size: 28px;
+      font-size: 24px;
       display: block;
+      line-height: 1.2;
     }
 
     .m1 { background: linear-gradient(135deg, #16a34a, #15803d); }
     .m2 { background: linear-gradient(135deg, #d97706, #b45309); }
     .m3 { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    .m4 { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
 
     table {
       width: 100%;
@@ -199,9 +208,8 @@
       color: #fff;
     }
 
-    .status-completo { background: var(--success); }
-    .status-incompleto { background: var(--warning); }
-    .status-sem_uniforme { background: var(--danger); }
+    .status-pontos { background: var(--success); }
+    .status-desconto { background: var(--danger); }
 
     .actions {
       display: flex;
@@ -231,23 +239,55 @@
     .message.ok { color: var(--success); }
     .message.error { color: var(--danger); }
 
-    .small { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
 
-    @media (max-width: 980px) {
+    .section-space { margin-top: 20px; }
+
+    .ranking-top {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .podium {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: #f8fafc;
+    }
+
+    .podium h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    .podium strong {
+      font-size: 22px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 1080px) {
       .container { grid-template-columns: 1fr; }
-      .grid-3 { grid-template-columns: 1fr; }
+      .grid-4, .grid-3, .ranking-top { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Controle de Uniforme</h1>
-    <p>Registro diário de conformidade de uniforme.</p>
+    <h1>Controle de Premiações</h1>
+    <p>Lançamento de pontos e descontos, classificação por período e controle automático de débito transportado entre meses.</p>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2>Novo registro</h2>
+      <h2>Novo lançamento</h2>
 
       <div class="user-box">
         <button id="btnLogin" class="btn-primary">Entrar com Google</button>
@@ -259,62 +299,67 @@
       <label for="nomeFuncionario">Funcionário</label>
       <input id="nomeFuncionario" type="text" placeholder="Ex.: Maria Aparecida" />
 
-      <label for="dataRegistro">Data</label>
-      <input id="dataRegistro" type="date" />
+      <label for="dataLancamento">Data do lançamento</label>
+      <input id="dataLancamento" type="date" />
 
-      <label for="statusUniforme">Status do uniforme</label>
-      <select id="statusUniforme">
-        <option value="COMPLETO">Completo</option>
-        <option value="INCOMPLETO">Incompleto</option>
-        <option value="SEM_UNIFORME">Sem uniforme</option>
+      <label for="tipoLancamento">Tipo</label>
+      <select id="tipoLancamento">
+        <option value="PONTOS">Pontos</option>
+        <option value="DESCONTO">Desconto</option>
       </select>
 
-      <label for="observacao">Observação</label>
-      <textarea id="observacao" placeholder="Ex.: sem crachá, faltando jaleco, liberado pela gerência..."></textarea>
+      <label for="quantidade">Quantidade</label>
+      <input id="quantidade" type="number" min="0" step="1" placeholder="Ex.: 10" />
 
-      <button id="btnSalvar" class="btn-primary">Salvar registro</button>
+      <label for="observacao">Observação</label>
+      <textarea id="observacao" placeholder="Ex.: meta diária, atraso, falta, destaque em vendas..."></textarea>
+
+      <button id="btnSalvar" class="btn-primary">Salvar lançamento</button>
       <button id="btnLimpar" class="btn-secondary">Limpar campos</button>
 
       <div id="formMessage" class="message"></div>
 
       <p class="small">
-        Regra aplicada neste exemplo: o sistema permite apenas <strong>1 registro por funcionário por data</strong>.
-        Caso já exista, o sistema atualiza o registro em vez de criar duplicado.
+        Regras do sistema: os pontos valem apenas dentro do próprio mês. Se o desconto ultrapassar os pontos do mês, o saldo negativo é transportado para o próximo período até ser zerado.
       </p>
     </section>
 
     <section>
       <div class="card" style="margin-bottom: 20px;">
         <div class="topbar">
-          <h2 style="margin:0;">Painel gerencial</h2>
-          <div class="pill" id="dataAtualPainel">-</div>
+          <h2 style="margin:0;">Painel do período</h2>
+          <div class="pill" id="periodoPainel">-</div>
+        </div>
+
+        <div class="grid-4">
+          <div class="metric m1">
+            <h3>Total de pontos</h3>
+            <strong id="totalPontosPeriodo">0</strong>
+          </div>
+          <div class="metric m2">
+            <h3>Total de descontos</h3>
+            <strong id="totalDescontosPeriodo">0</strong>
+          </div>
+          <div class="metric m3">
+            <h3>Débito transportado</h3>
+            <strong id="totalDebitoTransportado">0</strong>
+          </div>
+          <div class="metric m4">
+            <h3>Melhor do período</h3>
+            <strong id="melhorPeriodoResumo">-</strong>
+          </div>
         </div>
 
         <div class="grid-3">
+          <div class="metric m4">
+            <h3>Total de funcionários</h3>
+            <strong id="totalFuncionariosPeriodo">0</strong>
+          </div>
           <div class="metric m1">
-            <h3>Completo no período</h3>
-            <strong id="totalCompleto">0</strong>
+            <h3>Líder com pontos líquidos</h3>
+            <strong id="liderPontosLiquidos">0</strong>
           </div>
           <div class="metric m2">
-            <h3>Incompleto no período</h3>
-            <strong id="totalIncompleto">0</strong>
-          </div>
-          <div class="metric m3">
-            <h3>Sem uniforme no período</h3>
-            <strong id="totalSemUniforme">0</strong>
-          </div>
-        </div>
-
-        <div class="grid-3">
-          <div class="metric m1">
-            <h3>Dias com meta completa</h3>
-            <strong id="diasMetaCompleta">0</strong>
-          </div>
-          <div class="metric m2">
-            <h3>Total de dias analisados</h3>
-            <strong id="totalDiasAnalisados">0</strong>
-          </div>
-          <div class="metric m3">
             <h3>Mês de referência</h3>
             <strong id="mesReferencia">-</strong>
           </div>
@@ -323,44 +368,86 @@
         <label for="filtroMes">Mês de referência</label>
         <input id="filtroMes" type="month" />
 
-        <label for="filtroPeriodoInicio">Período inicial</label>
-        <input id="filtroPeriodoInicio" type="date" />
-
-        <label for="filtroPeriodoFim">Período final</label>
-        <input id="filtroPeriodoFim" type="date" />
-
-        <label for="filtroStatus">Filtrar status</label>
-        <select id="filtroStatus">
-          <option value="TODOS">Todos</option>
-          <option value="COMPLETO">Somente completos</option>
-          <option value="INCOMPLETO">Somente incompletos</option>
-          <option value="SEM_UNIFORME">Somente sem uniforme</option>
-        </select>
+        <label for="filtroFuncionario">Filtrar funcionário</label>
+        <input id="filtroFuncionario" type="text" placeholder="Digite parte do nome para filtrar" />
 
         <button id="btnAplicarFiltros" class="btn-primary">Aplicar filtros</button>
         <button id="btnLimparFiltros" class="btn-secondary">Limpar filtros</button>
       </div>
 
-      <div class="card">
+      <div class="card" style="margin-bottom: 20px;">
         <div class="topbar">
-          <h2 style="margin:0;">Histórico de registros</h2>
+          <h2 style="margin:0;">Pódio do período</h2>
+        </div>
+
+        <div class="ranking-top">
+          <div class="podium">
+            <h3>1º lugar</h3>
+            <strong id="podio1Nome">-</strong>
+            <span id="podio1Pontos">0 ponto(s)</span>
+          </div>
+          <div class="podium">
+            <h3>2º lugar</h3>
+            <strong id="podio2Nome">-</strong>
+            <span id="podio2Pontos">0 ponto(s)</span>
+          </div>
+          <div class="podium">
+            <h3>3º lugar</h3>
+            <strong id="podio3Nome">-</strong>
+            <span id="podio3Pontos">0 ponto(s)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="topbar">
+          <h2 style="margin:0;">Classificação do período</h2>
         </div>
 
         <div style="overflow:auto;">
           <table>
             <thead>
               <tr>
+                <th>Posição</th>
                 <th>Funcionário</th>
+                <th>Pontos do mês</th>
+                <th>Descontos do mês</th>
+                <th>Débito anterior</th>
+                <th>Pontos líquidos</th>
+                <th>Débito para próximo mês</th>
+                <th>Melhor do período</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaRanking">
+              <tr>
+                <td colspan="8" class="empty">Nenhum dado encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="topbar">
+          <h2 style="margin:0;">Histórico de lançamentos</h2>
+        </div>
+
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
                 <th>Data</th>
-                <th>Status</th>
+                <th>Funcionário</th>
+                <th>Tipo</th>
+                <th>Quantidade</th>
                 <th>Observação</th>
                 <th>Registrado por</th>
                 <th>Ações</th>
               </tr>
             </thead>
-            <tbody id="tabelaRegistros">
+            <tbody id="tabelaLancamentos">
               <tr>
-                <td colspan="6" class="empty">Nenhum registro encontrado.</td>
+                <td colspan="7" class="empty">Nenhum lançamento encontrado.</td>
               </tr>
             </tbody>
           </table>
@@ -381,8 +468,8 @@
     import {
       getFirestore,
       collection,
+      addDoc,
       doc,
-      setDoc,
       deleteDoc,
       onSnapshot,
       query,
@@ -390,15 +477,19 @@
     } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCuXZ2vhlaqjxtuLFi2_umbmicEHmVVI04",
-      authDomain: "uniforme-1f2ee.firebaseapp.com",
-      projectId: "uniforme-1f2ee",
-      storageBucket: "uniforme-1f2ee.firebasestorage.app",
-      messagingSenderId: "548500900587",
-      appId: "1:548500900587:web:c03eb8c77a3800a3264cae"
+      apiKey: "AIzaSyBINGtlxsdQmCSNoQ3jSYMUT1k46O_kuPQ",
+      authDomain: "premiacao-103da.firebaseapp.com",
+      projectId: "premiacao-103da",
+      storageBucket: "premiacao-103da.firebasestorage.app",
+      messagingSenderId: "742243052501",
+      appId: "1:742243052501:web:8b98689057fb751561eb5c"
     };
 
     const EMAIL_ADMIN_EXCLUSAO = 'carolline.bhz@gmail.com';
+    const EMAILS_PERMITIDOS = [
+      'carolline.bhz@gmail.com',
+      'atacadoopticomg.financeiro@gmail.com'
+    ];
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -409,38 +500,44 @@
     const btnLogout = document.getElementById('btnLogout');
     const userInfo = document.getElementById('userInfo');
     const nomeFuncionario = document.getElementById('nomeFuncionario');
-    const dataRegistro = document.getElementById('dataRegistro');
-    const statusUniforme = document.getElementById('statusUniforme');
+    const dataLancamento = document.getElementById('dataLancamento');
+    const tipoLancamento = document.getElementById('tipoLancamento');
+    const quantidade = document.getElementById('quantidade');
     const observacao = document.getElementById('observacao');
     const btnSalvar = document.getElementById('btnSalvar');
     const btnLimpar = document.getElementById('btnLimpar');
     const formMessage = document.getElementById('formMessage');
-    const tabelaRegistros = document.getElementById('tabelaRegistros');
-    const totalCompleto = document.getElementById('totalCompleto');
-    const totalIncompleto = document.getElementById('totalIncompleto');
-    const totalSemUniforme = document.getElementById('totalSemUniforme');
-    const dataAtualPainel = document.getElementById('dataAtualPainel');
     const filtroMes = document.getElementById('filtroMes');
-    const filtroPeriodoInicio = document.getElementById('filtroPeriodoInicio');
-    const filtroPeriodoFim = document.getElementById('filtroPeriodoFim');
-    const filtroStatus = document.getElementById('filtroStatus');
+    const filtroFuncionario = document.getElementById('filtroFuncionario');
     const btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
     const btnLimparFiltros = document.getElementById('btnLimparFiltros');
-    const diasMetaCompleta = document.getElementById('diasMetaCompleta');
-    const totalDiasAnalisados = document.getElementById('totalDiasAnalisados');
+    const periodoPainel = document.getElementById('periodoPainel');
+    const totalPontosPeriodo = document.getElementById('totalPontosPeriodo');
+    const totalDescontosPeriodo = document.getElementById('totalDescontosPeriodo');
+    const totalDebitoTransportado = document.getElementById('totalDebitoTransportado');
+    const melhorPeriodoResumo = document.getElementById('melhorPeriodoResumo');
+    const totalFuncionariosPeriodo = document.getElementById('totalFuncionariosPeriodo');
+    const liderPontosLiquidos = document.getElementById('liderPontosLiquidos');
     const mesReferencia = document.getElementById('mesReferencia');
+    const podio1Nome = document.getElementById('podio1Nome');
+    const podio1Pontos = document.getElementById('podio1Pontos');
+    const podio2Nome = document.getElementById('podio2Nome');
+    const podio2Pontos = document.getElementById('podio2Pontos');
+    const podio3Nome = document.getElementById('podio3Nome');
+    const podio3Pontos = document.getElementById('podio3Pontos');
+    const tabelaRanking = document.getElementById('tabelaRanking');
+    const tabelaLancamentos = document.getElementById('tabelaLancamentos');
 
     const hoje = new Date();
     const hojeIso = hoje.toISOString().split('T')[0];
     const mesAtual = hojeIso.slice(0, 7);
 
-    dataRegistro.value = hojeIso;
+    dataLancamento.value = hojeIso;
     filtroMes.value = mesAtual;
-    definirPeriodoDoMes(mesAtual);
-    atualizarBadgeData();
+    atualizarCabecalhoPeriodo();
 
     let usuarioAtual = null;
-    let todosRegistros = [];
+    let todosLancamentos = [];
 
     btnLogin.addEventListener('click', async () => {
       try {
@@ -459,6 +556,16 @@
     });
 
     btnLimpar.addEventListener('click', limparFormulario);
+    btnAplicarFiltros.addEventListener('click', atualizarTudo);
+
+    btnLimparFiltros.addEventListener('click', () => {
+      filtroMes.value = mesAtual;
+      filtroFuncionario.value = '';
+      atualizarTudo();
+    });
+
+    filtroMes.addEventListener('change', atualizarTudo);
+    filtroFuncionario.addEventListener('input', atualizarTudo);
 
     btnSalvar.addEventListener('click', async () => {
       if (!usuarioAtual) {
@@ -466,9 +573,15 @@
         return;
       }
 
+      if (!usuarioTemPermissaoDeUso()) {
+        mostrarMensagem('Seu usuário não tem permissão para lançar ou visualizar dados neste sistema.', true);
+        return;
+      }
+
       const funcionario = nomeFuncionario.value.trim();
-      const data = dataRegistro.value;
-      const status = statusUniforme.value;
+      const data = dataLancamento.value;
+      const tipo = tipoLancamento.value;
+      const qtd = Number(quantidade.value);
       const obs = observacao.value.trim();
 
       if (!funcionario) {
@@ -477,52 +590,36 @@
       }
 
       if (!data) {
-        mostrarMensagem('Informe a data do registro.', true);
+        mostrarMensagem('Informe a data do lançamento.', true);
+        return;
+      }
+
+      if (!qtd || qtd <= 0) {
+        mostrarMensagem('Informe uma quantidade válida maior que zero.', true);
         return;
       }
 
       try {
-        const funcionarioNormalizado = normalizarTexto(funcionario);
-        const docId = `${data}__${funcionarioNormalizado}`;
-
-        await setDoc(doc(db, 'controle_uniforme', docId), {
+        await addDoc(collection(db, 'premiacao_lancamentos'), {
           funcionario,
-          funcionario_normalizado: funcionarioNormalizado,
+          funcionario_normalizado: normalizarTexto(funcionario),
           data,
-          status_uniforme: status,
+          periodo: data.slice(0, 7),
+          tipo,
+          quantidade: qtd,
           observacao: obs,
           registrado_por_nome: usuarioAtual.displayName || usuarioAtual.email,
           registrado_por_email: usuarioAtual.email || '',
-          atualizado_em: new Date().toISOString(),
-          user_uid: usuarioAtual.uid
+          user_uid: usuarioAtual.uid,
+          criado_em: new Date().toISOString()
         });
 
-        mostrarMensagem('Registro salvo com sucesso. Se já existia um registro para esta data e funcionário, ele foi atualizado.');
+        mostrarMensagem('Lançamento salvo com sucesso.');
         limparFormulario(false);
       } catch (error) {
         mostrarMensagem('Erro ao salvar: ' + error.message, true);
       }
     });
-
-    filtroMes.addEventListener('change', () => {
-      if (filtroMes.value) {
-        definirPeriodoDoMes(filtroMes.value);
-      }
-      aplicarFiltros();
-    });
-
-    btnAplicarFiltros.addEventListener('click', aplicarFiltros);
-
-    btnLimparFiltros.addEventListener('click', () => {
-      filtroMes.value = mesAtual;
-      filtroStatus.value = 'TODOS';
-      definirPeriodoDoMes(mesAtual);
-      aplicarFiltros();
-    });
-
-    filtroPeriodoInicio.addEventListener('change', aplicarFiltros);
-    filtroPeriodoFim.addEventListener('change', aplicarFiltros);
-    filtroStatus.addEventListener('change', aplicarFiltros);
 
     onAuthStateChanged(auth, (user) => {
       usuarioAtual = user;
@@ -530,107 +627,247 @@
       if (user) {
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'block';
-        userInfo.textContent = `Logado como: ${user.displayName || 'Usuário'} (${user.email || 'sem email'})`;
+        const emailAtual = (user.email || '').toLowerCase();
+        const perfil = emailAtual === EMAIL_ADMIN_EXCLUSAO
+          ? 'Administrador com exclusão'
+          : (EMAILS_PERMITIDOS.includes(emailAtual) ? 'Usuário com lançamento e consulta' : 'Sem permissão');
+        userInfo.textContent = `Logado como: ${user.displayName || 'Usuário'} (${user.email || 'sem email'}) - ${perfil}`;
       } else {
         btnLogin.style.display = 'block';
         btnLogout.style.display = 'none';
         userInfo.textContent = 'Faça login para registrar e visualizar os dados.';
       }
 
-      atualizarTabela();
+      atualizarHistorico();
     });
 
-    const q = query(collection(db, 'controle_uniforme'), orderBy('data', 'desc'));
+    // Consulta simplificada (sem necessidade de índice composto)
+    const q = query(
+      collection(db, 'premiacao_lancamentos'),
+      orderBy('data', 'desc')
+    );
     onSnapshot(q, (snapshot) => {
-      todosRegistros = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      aplicarFiltros();
+      todosLancamentos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      atualizarTudo();
     }, (error) => {
-      mostrarMensagem('Erro ao carregar registros: ' + error.message, true);
+      mostrarMensagem('Erro ao carregar lançamentos: ' + error.message, true);
     });
 
-    function aplicarFiltros() {
-      atualizarTabela();
-      atualizarMetricas();
-      atualizarBadgeData();
+    function atualizarTudo() {
+      atualizarCabecalhoPeriodo();
+      atualizarPainelERanking();
+      atualizarHistorico();
+      aplicarPermissoesNaTela();
     }
 
-    function obterRegistrosFiltrados() {
-      const inicio = filtroPeriodoInicio.value || '';
-      const fim = filtroPeriodoFim.value || '';
-      const status = filtroStatus.value;
+    function atualizarCabecalhoPeriodo() {
+      periodoPainel.textContent = filtroMes.value ? formatarMesAno(filtroMes.value) : '-';
+      mesReferencia.textContent = filtroMes.value ? formatarMesAno(filtroMes.value) : '-';
+    }
 
-      return todosRegistros.filter(item => {
-        const dentroInicio = !inicio || item.data >= inicio;
-        const dentroFim = !fim || item.data <= fim;
-        const statusOk = status === 'TODOS' || item.status_uniforme === status;
-        return dentroInicio && dentroFim && statusOk;
+    function obterLancamentosFiltradosDoMes() {
+      const periodo = filtroMes.value;
+      const nomeFiltro = normalizarTexto(filtroFuncionario.value || '');
+
+      return todosLancamentos.filter(item => {
+        const periodoOk = !periodo || item.periodo === periodo;
+        const nomeOk = !nomeFiltro || (item.funcionario_normalizado || '').includes(nomeFiltro);
+        return periodoOk && nomeOk;
       });
     }
 
-    function atualizarTabela() {
-      const registrosFiltrados = obterRegistrosFiltrados();
+    function listarPeriodosAte(periodoFinal) {
+      const periodos = [...new Set(todosLancamentos.map(item => item.periodo).filter(Boolean))].sort();
+      return periodos.filter(periodo => periodo <= periodoFinal);
+    }
 
-      if (!registrosFiltrados.length) {
-        tabelaRegistros.innerHTML = '<tr><td colspan="6" class="empty">Nenhum registro encontrado.</td></tr>';
+    function construirResumoPorPeriodo() {
+      const periodos = [...new Set(todosLancamentos.map(item => item.periodo).filter(Boolean))].sort();
+      const funcionarios = [...new Set(todosLancamentos.map(item => item.funcionario_normalizado).filter(Boolean))].sort();
+      const resumo = {};
+      const dividasTransportadas = {};
+
+      for (const periodo of periodos) {
+        resumo[periodo] = {};
+
+        for (const funcNorm of funcionarios) {
+          const lancamentos = todosLancamentos.filter(item => item.periodo === periodo && item.funcionario_normalizado === funcNorm);
+          if (!lancamentos.length && !dividasTransportadas[funcNorm]) continue;
+
+          const pontos = lancamentos
+            .filter(item => item.tipo === 'PONTOS')
+            .reduce((acc, item) => acc + Number(item.quantidade || 0), 0);
+
+          const descontos = lancamentos
+            .filter(item => item.tipo === 'DESCONTO')
+            .reduce((acc, item) => acc + Number(item.quantidade || 0), 0);
+
+          const debitoAnterior = dividasTransportadas[funcNorm] || 0;
+          const totalAAbater = descontos + debitoAnterior;
+          const pontosLiquidos = Math.max(pontos - totalAAbater, 0);
+          const debitoProximo = Math.max(totalAAbater - pontos, 0);
+          const nomeOriginal = lancamentos[0]?.funcionario || buscarNomeOriginal(funcNorm);
+
+          resumo[periodo][funcNorm] = {
+            funcionario: nomeOriginal,
+            funcionario_normalizado: funcNorm,
+            periodo,
+            pontos,
+            descontos,
+            debitoAnterior,
+            pontosLiquidos,
+            debitoProximo,
+            melhorDoPeriodo: false
+          };
+
+          dividasTransportadas[funcNorm] = debitoProximo;
+        }
+
+        const rankingPeriodo = Object.values(resumo[periodo]).sort((a, b) => {
+          if (b.pontosLiquidos !== a.pontosLiquidos) return b.pontosLiquidos - a.pontosLiquidos;
+          if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+          return a.funcionario.localeCompare(b.funcionario, 'pt-BR');
+        });
+
+        if (rankingPeriodo.length && rankingPeriodo[0].pontosLiquidos > 0) {
+          resumo[periodo][rankingPeriodo[0].funcionario_normalizado].melhorDoPeriodo = true;
+        }
+      }
+
+      return resumo;
+    }
+
+    function atualizarPainelERanking() {
+      const periodo = filtroMes.value;
+      const nomeFiltro = normalizarTexto(filtroFuncionario.value || '');
+      if (!usuarioTemPermissaoDeUso()) {
+        totalPontosPeriodo.textContent = '0';
+        totalDescontosPeriodo.textContent = '0';
+        totalDebitoTransportado.textContent = '0';
+        melhorPeriodoResumo.textContent = '-';
+        totalFuncionariosPeriodo.textContent = '0';
+        liderPontosLiquidos.textContent = '0';
+        atualizarPodio([]);
+        tabelaRanking.innerHTML = '<tr><td colspan="8" class="empty">Seu usuário não tem permissão para visualizar a classificação.</td></tr>';
         return;
       }
 
-      const podeExcluir = usuarioAtual?.email?.toLowerCase() === EMAIL_ADMIN_EXCLUSAO;
+      const resumoCompleto = construirResumoPorPeriodo();
+      const resumoPeriodo = Object.values(resumoCompleto[periodo] || {}).filter(item => {
+        return !nomeFiltro || item.funcionario_normalizado.includes(nomeFiltro);
+      });
 
-      tabelaRegistros.innerHTML = registrosFiltrados.map(item => {
-        const classeStatus = `status-${item.status_uniforme.toLowerCase()}`;
-        const botaoExcluir = podeExcluir
-          ? `<button class="btn-danger" onclick="window.excluirRegistro('${item.id}')">Excluir</button>`
-          : `<button class="btn-secondary" disabled title="Somente ${EMAIL_ADMIN_EXCLUSAO} pode excluir.">Sem permissão</button>`;
+      const ranking = resumoPeriodo.sort((a, b) => {
+        if (b.pontosLiquidos !== a.pontosLiquidos) return b.pontosLiquidos - a.pontosLiquidos;
+        if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+        return a.funcionario.localeCompare(b.funcionario, 'pt-BR');
+      });
 
+      const totalPontos = ranking.reduce((acc, item) => acc + item.pontos, 0);
+      const totalDescontos = ranking.reduce((acc, item) => acc + item.descontos, 0);
+      const totalDebito = ranking.reduce((acc, item) => acc + item.debitoProximo, 0);
+      const melhor = ranking[0] || null;
+
+      totalPontosPeriodo.textContent = totalPontos;
+      totalDescontosPeriodo.textContent = totalDescontos;
+      totalDebitoTransportado.textContent = totalDebito;
+      melhorPeriodoResumo.textContent = melhor ? `${melhor.funcionario}` : '-';
+      totalFuncionariosPeriodo.textContent = ranking.length;
+      liderPontosLiquidos.textContent = melhor ? melhor.pontosLiquidos : 0;
+
+      atualizarPodio(ranking);
+      atualizarTabelaRanking(ranking);
+    }
+
+    function atualizarPodio(ranking) {
+      const pos1 = ranking[0];
+      const pos2 = ranking[1];
+      const pos3 = ranking[2];
+
+      podio1Nome.textContent = pos1 ? pos1.funcionario : '-';
+      podio1Pontos.textContent = pos1 ? `${pos1.pontosLiquidos} ponto(s)` : '0 ponto(s)';
+      podio2Nome.textContent = pos2 ? pos2.funcionario : '-';
+      podio2Pontos.textContent = pos2 ? `${pos2.pontosLiquidos} ponto(s)` : '0 ponto(s)';
+      podio3Nome.textContent = pos3 ? pos3.funcionario : '-';
+      podio3Pontos.textContent = pos3 ? `${pos3.pontosLiquidos} ponto(s)` : '0 ponto(s)';
+    }
+
+    function atualizarTabelaRanking(ranking) {
+      if (!ranking.length) {
+        tabelaRanking.innerHTML = '<tr><td colspan="8" class="empty">Nenhum dado encontrado.</td></tr>';
+        return;
+      }
+
+      tabelaRanking.innerHTML = ranking.map((item, index) => {
         return `
           <tr>
-            <td>${escapeHtml(item.funcionario || '-')}</td>
-            <td>${formatarData(item.data)}</td>
-            <td><span class="status ${classeStatus}">${formatarStatus(item.status_uniforme)}</span></td>
-            <td>${escapeHtml(item.observacao || '-')}</td>
-            <td>${escapeHtml(item.registrado_por_nome || item.registrado_por_email || '-')}</td>
-            <td>
-              <div class="actions">
-                ${botaoExcluir}
-              </div>
-            </td>
+            <td>${index + 1}º</td>
+            <td>${escapeHtml(item.funcionario)}</td>
+            <td>${item.pontos}</td>
+            <td>${item.descontos}</td>
+            <td>${item.debitoAnterior}</td>
+            <td><strong>${item.pontosLiquidos}</strong></td>
+            <td>${item.debitoProximo}</td>
+            <td>${item.melhorDoPeriodo ? 'Sim' : 'Não'}</td>
           </tr>
         `;
       }).join('');
     }
 
-    function atualizarMetricas() {
-      const registrosFiltrados = obterRegistrosFiltrados();
-      const completo = registrosFiltrados.filter(item => item.status_uniforme === 'COMPLETO').length;
-      const incompleto = registrosFiltrados.filter(item => item.status_uniforme === 'INCOMPLETO').length;
-      const semUniforme = registrosFiltrados.filter(item => item.status_uniforme === 'SEM_UNIFORME').length;
+    function atualizarHistorico() {
+      const lancamentos = obterLancamentosFiltradosDoMes();
+      const podeExcluir = usuarioAtual?.email?.toLowerCase() === EMAIL_ADMIN_EXCLUSAO;
+      const podeVisualizar = usuarioTemPermissaoDeUso();
 
-      totalCompleto.textContent = completo;
-      totalIncompleto.textContent = incompleto;
-      totalSemUniforme.textContent = semUniforme;
+      if (!podeVisualizar) {
+        tabelaLancamentos.innerHTML = '<tr><td colspan="7" class="empty">Seu usuário não tem permissão para visualizar os lançamentos.</td></tr>';
+        return;
+      }
 
-      const agrupadoPorDia = new Map();
-      registrosFiltrados.forEach(item => {
-        if (!agrupadoPorDia.has(item.data)) agrupadoPorDia.set(item.data, []);
-        agrupadoPorDia.get(item.data).push(item);
-      });
+      if (!lancamentos.length) {
+        tabelaLancamentos.innerHTML = '<tr><td colspan="7" class="empty">Nenhum lançamento encontrado.</td></tr>';
+        return;
+      }
 
-      const dias = Array.from(agrupadoPorDia.keys()).sort();
-      const diasComMeta = dias.filter(data => {
-        const registrosDia = agrupadoPorDia.get(data);
-        return registrosDia.length > 0 && registrosDia.every(r => r.status_uniforme === 'COMPLETO');
-      }).length;
+      tabelaLancamentos.innerHTML = lancamentos.map(item => {
+        const classeTipo = item.tipo === 'PONTOS' ? 'status-pontos' : 'status-desconto';
+        const labelTipo = item.tipo === 'PONTOS' ? 'Pontos' : 'Desconto';
+        const botaoExcluir = podeExcluir
+          ? `<button class="btn-danger" onclick="window.excluirLancamento('${item.id}')">Excluir</button>`
+          : `<button class="btn-secondary" disabled title="Somente ${EMAIL_ADMIN_EXCLUSAO} pode excluir.">Sem permissão</button>`;
 
-      diasMetaCompleta.textContent = diasComMeta;
-      totalDiasAnalisados.textContent = dias.length;
-      mesReferencia.textContent = filtroMes.value ? formatarMesAno(filtroMes.value) : '-';
+        return `
+          <tr>
+            <td>${formatarData(item.data)}</td>
+            <td>${escapeHtml(item.funcionario || '-')}</td>
+            <td><span class="status ${classeTipo}">${labelTipo}</span></td>
+            <td>${Number(item.quantidade || 0)}</td>
+            <td>${escapeHtml(item.observacao || '-')}</td>
+            <td>${escapeHtml(item.registrado_por_nome || item.registrado_por_email || '-')}</td>
+            <td><div class="actions">${botaoExcluir}</div></td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    function atualizarBadgeData() {
-      const inicio = filtroPeriodoInicio.value ? formatarData(filtroPeriodoInicio.value) : '-';
-      const fim = filtroPeriodoFim.value ? formatarData(filtroPeriodoFim.value) : '-';
-      dataAtualPainel.textContent = `Período: ${inicio} até ${fim}`;
+    function usuarioTemPermissaoDeUso() {
+      const emailAtual = (usuarioAtual?.email || '').toLowerCase();
+      return EMAILS_PERMITIDOS.includes(emailAtual);
+    }
+
+    function aplicarPermissoesNaTela() {
+      const permitido = usuarioTemPermissaoDeUso();
+      nomeFuncionario.disabled = !permitido;
+      dataLancamento.disabled = !permitido;
+      tipoLancamento.disabled = !permitido;
+      quantidade.disabled = !permitido;
+      observacao.disabled = !permitido;
+      btnSalvar.disabled = !permitido;
+    }
+
+    function buscarNomeOriginal(funcNorm) {
+      const encontrado = todosLancamentos.find(item => item.funcionario_normalizado === funcNorm);
+      return encontrado?.funcionario || funcNorm;
     }
 
     function mostrarMensagem(texto, erro = false) {
@@ -640,16 +877,10 @@
 
     function limparFormulario(limparData = true) {
       nomeFuncionario.value = '';
-      statusUniforme.value = 'COMPLETO';
+      tipoLancamento.value = 'PONTOS';
+      quantidade.value = '';
       observacao.value = '';
-      if (limparData) dataRegistro.value = hojeIso;
-    }
-
-    function formatarStatus(valor) {
-      if (valor === 'COMPLETO') return 'Completo';
-      if (valor === 'INCOMPLETO') return 'Incompleto';
-      if (valor === 'SEM_UNIFORME') return 'Sem uniforme';
-      return valor || '-';
+      if (limparData) dataLancamento.value = hojeIso;
     }
 
     function formatarData(dataIso) {
@@ -665,17 +896,8 @@
       return `${nomes[Number(mes) - 1] || mes}/${ano}`;
     }
 
-    function definirPeriodoDoMes(valorMes) {
-      if (!valorMes) return;
-      const [ano, mes] = valorMes.split('-').map(Number);
-      const inicio = new Date(ano, mes - 1, 1);
-      const fim = new Date(ano, mes, 0);
-      filtroPeriodoInicio.value = inicio.toISOString().split('T')[0];
-      filtroPeriodoFim.value = fim.toISOString().split('T')[0];
-    }
-
     function normalizarTexto(texto) {
-      return texto
+      return String(texto || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
@@ -692,19 +914,19 @@
         .replace(/'/g, '&#039;');
     }
 
-    window.excluirRegistro = async function(id) {
+    window.excluirLancamento = async function(id) {
       const emailAtual = usuarioAtual?.email?.toLowerCase() || '';
       if (emailAtual !== EMAIL_ADMIN_EXCLUSAO) {
         mostrarMensagem(`Somente ${EMAIL_ADMIN_EXCLUSAO} pode excluir lançamentos.`, true);
         return;
       }
 
-      const confirmar = confirm('Deseja realmente excluir este registro?');
+      const confirmar = confirm('Deseja realmente excluir este lançamento?');
       if (!confirmar) return;
 
       try {
-        await deleteDoc(doc(db, 'controle_uniforme', id));
-        mostrarMensagem('Registro excluído com sucesso.');
+        await deleteDoc(doc(db, 'premiacao_lancamentos', id));
+        mostrarMensagem('Lançamento excluído com sucesso.');
       } catch (error) {
         mostrarMensagem('Erro ao excluir: ' + error.message, true);
       }
