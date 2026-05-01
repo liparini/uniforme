@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controle de Uniforme</title>
+  <title>Controle de Uniforme, Atrasos e Faltas</title>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -15,6 +15,9 @@
       --success: #16a34a;
       --warning: #d97706;
       --danger: #dc2626;
+      --purple: #7c3aed;
+      --purple-dark: #6d28d9;
+      --indigo: #4f46e5;
       --border: #dbe3ef;
       --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       --radius: 18px;
@@ -36,15 +39,43 @@
       box-shadow: var(--shadow);
     }
 
-    header h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
+    header h1 { margin: 0 0 8px; font-size: 28px; }
+    header p { margin: 0; opacity: 0.95; }
+
+    /* TABS */
+    .tabs-nav {
+      background: #fff;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      gap: 0;
+      padding: 0 24px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.05);
     }
 
-    header p {
-      margin: 0;
-      opacity: 0.95;
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 16px 24px;
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--muted);
+      cursor: pointer;
+      transition: 0.2s;
+      width: auto;
+      border-radius: 0;
+      margin-bottom: -2px;
     }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
     .container {
       width: min(1200px, calc(100% - 32px));
@@ -52,6 +83,11 @@
       display: grid;
       grid-template-columns: 360px 1fr;
       gap: 20px;
+    }
+
+    .container-full {
+      width: min(1200px, calc(100% - 32px));
+      margin: 24px auto 40px;
     }
 
     .card {
@@ -62,10 +98,7 @@
       padding: 20px;
     }
 
-    .card h2 {
-      margin-top: 0;
-      font-size: 20px;
-    }
+    .card h2 { margin-top: 0; font-size: 20px; }
 
     label {
       display: block;
@@ -82,10 +115,7 @@
       font-size: 14px;
     }
 
-    textarea {
-      min-height: 84px;
-      resize: vertical;
-    }
+    textarea { min-height: 84px; resize: vertical; }
 
     button {
       border: none;
@@ -94,23 +124,14 @@
       transition: 0.2s ease;
     }
 
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      margin-top: 18px;
-    }
-
+    .btn-primary { background: var(--primary); color: #fff; margin-top: 18px; }
     .btn-primary:hover { background: var(--primary-dark); }
-
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111827;
-      margin-top: 10px;
-    }
-
+    .btn-secondary { background: #e5e7eb; color: #111827; margin-top: 10px; }
     .btn-success { background: var(--success); color: #fff; }
     .btn-warning { background: var(--warning); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
+    .btn-purple { background: var(--purple); color: #fff; margin-top: 18px; }
+    .btn-purple:hover { background: var(--purple-dark); }
 
     .topbar {
       display: flex;
@@ -144,6 +165,12 @@
       margin-bottom: 18px;
     }
 
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
     .metric {
       border-radius: 16px;
       padding: 16px;
@@ -157,14 +184,14 @@
       opacity: 0.95;
     }
 
-    .metric strong {
-      font-size: 28px;
-      display: block;
-    }
+    .metric strong { font-size: 28px; display: block; }
 
     .m1 { background: linear-gradient(135deg, #16a34a, #15803d); }
     .m2 { background: linear-gradient(135deg, #d97706, #b45309); }
     .m3 { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    .m4 { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+    .m5 { background: linear-gradient(135deg, #4f46e5, #3730a3); }
+    .m6 { background: linear-gradient(135deg, #0891b2, #0e7490); }
 
     table {
       width: 100%;
@@ -203,6 +230,18 @@
     .status-incompleto { background: var(--warning); }
     .status-sem_uniforme { background: var(--danger); }
 
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .badge-atraso { background: #fef3c7; color: #92400e; }
+    .badge-falta { background: #fee2e2; color: #991b1b; }
+    .badge-zero { background: #f0fdf4; color: #166534; }
+
     .actions {
       display: flex;
       gap: 8px;
@@ -238,163 +277,413 @@
       line-height: 1.5;
     }
 
+    .number-input-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .number-input-group > div { display: flex; flex-direction: column; }
+
+    .input-number-control {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .input-number-control input {
+      border: none;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      width: 100%;
+      border-radius: 0;
+      padding: 10px 4px;
+    }
+
+    .input-number-control input:focus { outline: none; }
+
+    .btn-num {
+      background: #f1f5f9;
+      border: none;
+      width: 40px;
+      min-width: 40px;
+      height: 44px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-radius: 0;
+      padding: 0;
+      color: #475569;
+      margin: 0;
+    }
+
+    .btn-num:hover { background: #e2e8f0; }
+
+    /* Resumo por funcionário */
+    .resumo-table th, .resumo-table td { padding: 10px 12px; }
+
+    .ranking-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ranking-bar {
+      height: 8px;
+      border-radius: 99px;
+      min-width: 4px;
+    }
+
+    .bar-atraso { background: #d97706; }
+    .bar-falta { background: #dc2626; }
+
+    /* Seção de login compartilhada */
+    .login-shared {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .login-shared span { font-size: 14px; color: #1e40af; font-weight: bold; }
+
     @media (max-width: 980px) {
       .container { grid-template-columns: 1fr; }
       .grid-3 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .number-input-group { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Controle de Uniforme</h1>
-    <p>Registro diário de conformidade de uniforme.</p>
+    <h1>Controle de Uniforme, Atrasos e Faltas</h1>
+    <p>Registro diário de conformidade de uniforme e ocorrências de ponto.</p>
   </header>
 
-  <main class="container">
-    <section class="card">
-      <h2>Novo registro</h2>
+  <!-- NAVEGAÇÃO POR ABAS -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" onclick="mudarAba('uniforme')">👔 Uniforme</button>
+    <button class="tab-btn" onclick="mudarAba('ocorrencias')">⏰ Atrasos e Faltas</button>
+    <button class="tab-btn" onclick="mudarAba('resumo')">📊 Resumo Geral</button>
+  </nav>
 
-      <div class="user-box">
-        <button id="btnLogin" class="btn-primary">Entrar com Google</button>
-        <button id="btnLogout" class="btn-secondary" style="display:none;">Sair</button>
-      </div>
+  <!-- ===== ABA UNIFORME ===== -->
+  <div id="tab-uniforme" class="tab-content active">
+    <main class="container">
+      <section class="card">
+        <h2>Novo registro de uniforme</h2>
 
-      <p id="userInfo" class="small">Faça login para registrar e visualizar os dados.</p>
-
-      <label for="nomeFuncionario">Funcionário</label>
-      <input id="nomeFuncionario" type="text" placeholder="Ex.: Maria Aparecida" />
-
-      <label for="dataRegistro">Data</label>
-      <input id="dataRegistro" type="date" />
-
-      <label for="statusUniforme">Status do uniforme</label>
-      <select id="statusUniforme">
-        <option value="COMPLETO">Completo</option>
-        <option value="INCOMPLETO">Incompleto</option>
-        <option value="SEM_UNIFORME">Sem uniforme</option>
-      </select>
-
-      <label for="observacao">Observação</label>
-      <textarea id="observacao" placeholder="Ex.: sem crachá, faltando jaleco, liberado pela gerência..."></textarea>
-
-      <button id="btnSalvar" class="btn-primary">Salvar registro</button>
-      <button id="btnLimpar" class="btn-secondary">Limpar campos</button>
-
-      <div id="formMessage" class="message"></div>
-
-      <p class="small">
-        Regra aplicada neste exemplo: o sistema permite apenas <strong>1 registro por funcionário por data</strong>.
-        Caso já exista, o sistema atualiza o registro em vez de criar duplicado.
-      </p>
-    </section>
-
-    <section>
-      <div class="card" style="margin-bottom: 20px;">
-        <div class="topbar">
-          <h2 style="margin:0;">Painel gerencial</h2>
-          <div class="pill" id="dataAtualPainel">-</div>
+        <div class="user-box">
+          <button id="btnLoginU" class="btn-primary" style="margin-top:0;">Entrar com Google</button>
+          <button id="btnLogoutU" class="btn-secondary" style="display:none;margin-top:0;">Sair</button>
         </div>
+        <p id="userInfoU" class="small">Faça login para registrar e visualizar os dados.</p>
 
-        <div class="grid-3">
-          <div class="metric m1">
-            <h3>Completo no período</h3>
-            <strong id="totalCompleto">0</strong>
-          </div>
-          <div class="metric m2">
-            <h3>Incompleto no período</h3>
-            <strong id="totalIncompleto">0</strong>
-          </div>
-          <div class="metric m3">
-            <h3>Sem uniforme no período</h3>
-            <strong id="totalSemUniforme">0</strong>
-          </div>
-        </div>
+        <label for="nomeFuncionario">Funcionário</label>
+        <input id="nomeFuncionario" type="text" placeholder="Ex.: Maria Aparecida" />
 
-        <div class="grid-3">
-          <div class="metric m1">
-            <h3>Dias com meta completa</h3>
-            <strong id="diasMetaCompleta">0</strong>
-          </div>
-          <div class="metric m2">
-            <h3>Total de dias analisados</h3>
-            <strong id="totalDiasAnalisados">0</strong>
-          </div>
-          <div class="metric m3">
-            <h3>Mês de referência</h3>
-            <strong id="mesReferencia">-</strong>
-          </div>
-        </div>
+        <label for="dataRegistro">Data</label>
+        <input id="dataRegistro" type="date" />
 
-        <label for="filtroMes">Mês de referência</label>
-        <input id="filtroMes" type="month" />
-
-        <label for="filtroPeriodoInicio">Período inicial</label>
-        <input id="filtroPeriodoInicio" type="date" />
-
-        <label for="filtroPeriodoFim">Período final</label>
-        <input id="filtroPeriodoFim" type="date" />
-
-        <label for="filtroFuncionario">Filtrar funcionário</label>
-        <input id="filtroFuncionario" type="text" placeholder="Digite o nome ou parte do nome" />
-
-        <label for="filtroStatus">Filtrar status</label>
-        <select id="filtroStatus">
-          <option value="TODOS">Todos</option>
-          <option value="COMPLETO">Somente completos</option>
-          <option value="INCOMPLETO">Somente incompletos</option>
-          <option value="SEM_UNIFORME">Somente sem uniforme</option>
+        <label for="statusUniforme">Status do uniforme</label>
+        <select id="statusUniforme">
+          <option value="COMPLETO">Completo</option>
+          <option value="INCOMPLETO">Incompleto</option>
+          <option value="SEM_UNIFORME">Sem uniforme</option>
         </select>
 
-        <button id="btnAplicarFiltros" class="btn-primary">Aplicar filtros</button>
-        <button id="btnLimparFiltros" class="btn-secondary">Limpar filtros</button>
+        <label for="observacao">Observação</label>
+        <textarea id="observacao" placeholder="Ex.: sem crachá, faltando jaleco, liberado pela gerência..."></textarea>
+
+        <button id="btnSalvar" class="btn-primary">Salvar registro</button>
+        <button id="btnLimpar" class="btn-secondary">Limpar campos</button>
+
+        <div id="formMessage" class="message"></div>
+
+        <p class="small">
+          Regra: o sistema permite apenas <strong>1 registro por funcionário por data</strong>.
+          Caso já exista, o registro será atualizado.
+        </p>
+      </section>
+
+      <section>
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="topbar">
+            <h2 style="margin:0;">Painel gerencial — Uniforme</h2>
+            <div class="pill" id="dataAtualPainel">-</div>
+          </div>
+
+          <div class="grid-3">
+            <div class="metric m1">
+              <h3>Completo no período</h3>
+              <strong id="totalCompleto">0</strong>
+            </div>
+            <div class="metric m2">
+              <h3>Incompleto no período</h3>
+              <strong id="totalIncompleto">0</strong>
+            </div>
+            <div class="metric m3">
+              <h3>Sem uniforme no período</h3>
+              <strong id="totalSemUniforme">0</strong>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="metric m1">
+              <h3>Dias com meta completa</h3>
+              <strong id="diasMetaCompleta">0</strong>
+            </div>
+            <div class="metric m2">
+              <h3>Total de dias analisados</h3>
+              <strong id="totalDiasAnalisados">0</strong>
+            </div>
+            <div class="metric m3">
+              <h3>Mês de referência</h3>
+              <strong id="mesReferencia">-</strong>
+            </div>
+          </div>
+
+          <label for="filtroMes">Mês de referência</label>
+          <input id="filtroMes" type="month" />
+
+          <label for="filtroPeriodoInicio">Período inicial</label>
+          <input id="filtroPeriodoInicio" type="date" />
+
+          <label for="filtroPeriodoFim">Período final</label>
+          <input id="filtroPeriodoFim" type="date" />
+
+          <label for="filtroFuncionario">Filtrar funcionário</label>
+          <input id="filtroFuncionario" type="text" placeholder="Digite o nome ou parte do nome" />
+
+          <label for="filtroStatus">Filtrar status</label>
+          <select id="filtroStatus">
+            <option value="TODOS">Todos</option>
+            <option value="COMPLETO">Somente completos</option>
+            <option value="INCOMPLETO">Somente incompletos</option>
+            <option value="SEM_UNIFORME">Somente sem uniforme</option>
+          </select>
+
+          <button id="btnAplicarFiltros" class="btn-primary">Aplicar filtros</button>
+          <button id="btnLimparFiltros" class="btn-secondary">Limpar filtros</button>
+        </div>
+
+        <div class="card">
+          <div class="topbar">
+            <h2 style="margin:0;">Histórico de registros</h2>
+          </div>
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Funcionário</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                  <th>Observação</th>
+                  <th>Registrado por</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaRegistros">
+                <tr><td colspan="6" class="empty">Nenhum registro encontrado.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===== ABA ATRASOS E FALTAS ===== -->
+  <div id="tab-ocorrencias" class="tab-content">
+    <main class="container">
+      <section class="card">
+        <h2>Registrar ocorrência</h2>
+        <p id="userInfoO" class="small">Faça login na aba Uniforme para registrar.</p>
+
+        <label for="nomeFunc_O">Funcionário</label>
+        <input id="nomeFunc_O" type="text" placeholder="Ex.: João Silva" />
+
+        <label for="mesOcorrencia">Mês de referência</label>
+        <input id="mesOcorrencia" type="month" />
+
+        <div class="number-input-group" style="margin-top:14px;">
+          <div>
+            <label style="margin-top:0;">Quantidade de atrasos</label>
+            <div class="input-number-control">
+              <button class="btn-num" onclick="ajustarNumero('qtdAtrasos', -1)">−</button>
+              <input id="qtdAtrasos" type="number" value="0" min="0" max="999" />
+              <button class="btn-num" onclick="ajustarNumero('qtdAtrasos', 1)">+</button>
+            </div>
+          </div>
+          <div>
+            <label style="margin-top:0;">Quantidade de faltas</label>
+            <div class="input-number-control">
+              <button class="btn-num" onclick="ajustarNumero('qtdFaltas', -1)">−</button>
+              <input id="qtdFaltas" type="number" value="0" min="0" max="999" />
+              <button class="btn-num" onclick="ajustarNumero('qtdFaltas', 1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <label for="obsOcorrencia">Observação</label>
+        <textarea id="obsOcorrencia" placeholder="Ex.: 3 atrasos na segunda semana, falta no dia 10 sem justificativa..."></textarea>
+
+        <button id="btnSalvarOcorrencia" class="btn-purple">Salvar ocorrência</button>
+        <button id="btnLimparOcorrencia" class="btn-secondary">Limpar campos</button>
+
+        <div id="formMessageO" class="message"></div>
+
+        <p class="small">
+          Regra: <strong>1 registro por funcionário por mês</strong>. Ao salvar novamente o mesmo mês e funcionário, o registro é atualizado (acumulativo ou substituindo — conforme sua necessidade).
+        </p>
+      </section>
+
+      <section>
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="topbar">
+            <h2 style="margin:0;">Painel — Atrasos e Faltas</h2>
+            <div class="pill" id="pillMesO">-</div>
+          </div>
+
+          <div class="grid-3">
+            <div class="metric m2">
+              <h3>Total de atrasos no período</h3>
+              <strong id="totalAtrasos">0</strong>
+            </div>
+            <div class="metric m3">
+              <h3>Total de faltas no período</h3>
+              <strong id="totalFaltas">0</strong>
+            </div>
+            <div class="metric m4">
+              <h3>Funcionários com ocorrências</h3>
+              <strong id="totalFuncOcorrencias">0</strong>
+            </div>
+          </div>
+
+          <label for="filtroMesO">Mês de referência</label>
+          <input id="filtroMesO" type="month" />
+
+          <label for="filtroFuncO">Filtrar funcionário</label>
+          <input id="filtroFuncO" type="text" placeholder="Digite o nome ou parte do nome" />
+
+          <label for="filtroTipoO">Filtrar por tipo</label>
+          <select id="filtroTipoO">
+            <option value="TODOS">Todos</option>
+            <option value="COM_ATRASO">Com atrasos</option>
+            <option value="COM_FALTA">Com faltas</option>
+            <option value="COM_AMBOS">Com atrasos E faltas</option>
+          </select>
+
+          <button id="btnAplicarFiltrosO" class="btn-purple">Aplicar filtros</button>
+          <button id="btnLimparFiltrosO" class="btn-secondary">Limpar filtros</button>
+        </div>
+
+        <div class="card">
+          <div class="topbar">
+            <h2 style="margin:0;">Histórico de ocorrências</h2>
+          </div>
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Funcionário</th>
+                  <th>Mês</th>
+                  <th>Atrasos</th>
+                  <th>Faltas</th>
+                  <th>Observação</th>
+                  <th>Registrado por</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaOcorrencias">
+                <tr><td colspan="7" class="empty">Nenhuma ocorrência encontrada.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===== ABA RESUMO ===== -->
+  <div id="tab-resumo" class="tab-content">
+    <div class="container-full">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="topbar">
+          <h2 style="margin:0;">Resumo consolidado por funcionário</h2>
+          <div class="pill" id="pillMesResumo">-</div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:0;">
+          <div class="metric m1">
+            <h3>Funcionários registrados</h3>
+            <strong id="resumoTotalFunc">0</strong>
+          </div>
+          <div class="metric m2">
+            <h3>Total atrasos (mês)</h3>
+            <strong id="resumoTotalAtrasos">0</strong>
+          </div>
+          <div class="metric m3">
+            <h3>Total faltas (mês)</h3>
+            <strong id="resumoTotalFaltas">0</strong>
+          </div>
+        </div>
+
+        <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+          <div style="flex:1; min-width:160px;">
+            <label for="filtroMesResumo" style="margin-top:0;">Mês de referência</label>
+            <input id="filtroMesResumo" type="month" />
+          </div>
+          <div style="flex:1; min-width:160px;">
+            <label for="filtroFuncResumo" style="margin-top:0;">Filtrar funcionário</label>
+            <input id="filtroFuncResumo" type="text" placeholder="Nome parcial..." />
+          </div>
+          <button id="btnAplicarResumo" class="btn-primary" style="flex:0 0 auto; align-self:flex-end; margin-top:0; width:auto; padding:12px 20px;">Aplicar</button>
+          <button id="btnLimparResumo" class="btn-secondary" style="flex:0 0 auto; align-self:flex-end; margin-top:0; width:auto; padding:12px 20px;">Limpar</button>
+        </div>
       </div>
 
       <div class="card">
-        <div class="topbar">
-          <h2 style="margin:0;">Histórico de registros</h2>
-        </div>
-
         <div style="overflow:auto;">
-          <table>
+          <table class="resumo-table">
             <thead>
               <tr>
                 <th>Funcionário</th>
-                <th>Data</th>
-                <th>Status</th>
-                <th>Observação</th>
-                <th>Registrado por</th>
-                <th>Ações</th>
+                <th>Uniforme — Completo</th>
+                <th>Uniforme — Incompleto</th>
+                <th>Uniforme — Sem uniforme</th>
+                <th>Atrasos (mês)</th>
+                <th>Faltas (mês)</th>
+                <th>Obs. ocorrência</th>
               </tr>
             </thead>
-            <tbody id="tabelaRegistros">
-              <tr>
-                <td colspan="6" class="empty">Nenhum registro encontrado.</td>
-              </tr>
+            <tbody id="tabelaResumo">
+              <tr><td colspan="7" class="empty">Nenhum dado encontrado.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
     import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      signOut,
-      onAuthStateChanged
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
     } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
     import {
-      getFirestore,
-      collection,
-      doc,
-      setDoc,
-      deleteDoc,
-      onSnapshot,
-      query,
-      orderBy
+      getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy
     } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -413,9 +702,10 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    const btnLogin = document.getElementById('btnLogin');
-    const btnLogout = document.getElementById('btnLogout');
-    const userInfo = document.getElementById('userInfo');
+    // ===== DOM UNIFORME =====
+    const btnLoginU = document.getElementById('btnLoginU');
+    const btnLogoutU = document.getElementById('btnLogoutU');
+    const userInfoU = document.getElementById('userInfoU');
     const nomeFuncionario = document.getElementById('nomeFuncionario');
     const dataRegistro = document.getElementById('dataRegistro');
     const statusUniforme = document.getElementById('statusUniforme');
@@ -439,129 +729,196 @@
     const totalDiasAnalisados = document.getElementById('totalDiasAnalisados');
     const mesReferencia = document.getElementById('mesReferencia');
 
+    // ===== DOM OCORRÊNCIAS =====
+    const userInfoO = document.getElementById('userInfoO');
+    const nomeFunc_O = document.getElementById('nomeFunc_O');
+    const mesOcorrencia = document.getElementById('mesOcorrencia');
+    const qtdAtrasos = document.getElementById('qtdAtrasos');
+    const qtdFaltas = document.getElementById('qtdFaltas');
+    const obsOcorrencia = document.getElementById('obsOcorrencia');
+    const btnSalvarOcorrencia = document.getElementById('btnSalvarOcorrencia');
+    const btnLimparOcorrencia = document.getElementById('btnLimparOcorrencia');
+    const formMessageO = document.getElementById('formMessageO');
+    const tabelaOcorrencias = document.getElementById('tabelaOcorrencias');
+    const totalAtrasos = document.getElementById('totalAtrasos');
+    const totalFaltas = document.getElementById('totalFaltas');
+    const totalFuncOcorrencias = document.getElementById('totalFuncOcorrencias');
+    const pillMesO = document.getElementById('pillMesO');
+    const filtroMesO = document.getElementById('filtroMesO');
+    const filtroFuncO = document.getElementById('filtroFuncO');
+    const filtroTipoO = document.getElementById('filtroTipoO');
+    const btnAplicarFiltrosO = document.getElementById('btnAplicarFiltrosO');
+    const btnLimparFiltrosO = document.getElementById('btnLimparFiltrosO');
+
+    // ===== DOM RESUMO =====
+    const filtroMesResumo = document.getElementById('filtroMesResumo');
+    const filtroFuncResumo = document.getElementById('filtroFuncResumo');
+    const btnAplicarResumo = document.getElementById('btnAplicarResumo');
+    const btnLimparResumo = document.getElementById('btnLimparResumo');
+    const tabelaResumo = document.getElementById('tabelaResumo');
+    const resumoTotalFunc = document.getElementById('resumoTotalFunc');
+    const resumoTotalAtrasos = document.getElementById('resumoTotalAtrasos');
+    const resumoTotalFaltas = document.getElementById('resumoTotalFaltas');
+    const pillMesResumo = document.getElementById('pillMesResumo');
+
+    // ===== ESTADO =====
     const hoje = new Date();
     const hojeIso = hoje.toISOString().split('T')[0];
     const mesAtual = hojeIso.slice(0, 7);
 
+    let usuarioAtual = null;
+    let todosRegistros = [];
+    let todasOcorrencias = [];
+
+    // Inicializar datas
     dataRegistro.value = hojeIso;
     filtroMes.value = mesAtual;
+    mesOcorrencia.value = mesAtual;
+    filtroMesO.value = mesAtual;
+    filtroMesResumo.value = mesAtual;
     definirPeriodoDoMes(mesAtual);
     atualizarBadgeData();
 
-    let usuarioAtual = null;
-    let todosRegistros = [];
-
-    btnLogin.addEventListener('click', async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        mostrarMensagem('Erro ao entrar: ' + error.message, true);
-      }
+    // ===== AUTH =====
+    btnLoginU.addEventListener('click', async () => {
+      try { await signInWithPopup(auth, provider); }
+      catch (e) { mostrarMensagem('Erro ao entrar: ' + e.message, true); }
     });
 
-    btnLogout.addEventListener('click', async () => {
-      try {
-        await signOut(auth);
-      } catch (error) {
-        mostrarMensagem('Erro ao sair: ' + error.message, true);
-      }
+    btnLogoutU.addEventListener('click', async () => {
+      try { await signOut(auth); }
+      catch (e) { mostrarMensagem('Erro ao sair: ' + e.message, true); }
     });
 
-    btnLimpar.addEventListener('click', limparFormulario);
+    onAuthStateChanged(auth, (user) => {
+      usuarioAtual = user;
+      const textoLogin = user
+        ? `Logado como: ${user.displayName || 'Usuário'} (${user.email || 'sem email'})`
+        : 'Faça login para registrar e visualizar os dados.';
 
+      userInfoU.textContent = textoLogin;
+      userInfoO.textContent = user ? textoLogin : 'Faça login na aba Uniforme para registrar.';
+
+      if (user) {
+        btnLoginU.style.display = 'none';
+        btnLogoutU.style.display = 'block';
+      } else {
+        btnLoginU.style.display = 'block';
+        btnLogoutU.style.display = 'none';
+      }
+
+      atualizarTabelaUniforme();
+      atualizarTabelaOcorrencias();
+      atualizarResumo();
+    });
+
+    // ===== FIRESTORE — UNIFORME =====
+    const qUniforme = query(collection(db, 'controle_uniforme'), orderBy('data', 'desc'));
+    onSnapshot(qUniforme, (snapshot) => {
+      todosRegistros = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      aplicarFiltrosUniforme();
+      atualizarResumo();
+    }, (e) => mostrarMensagem('Erro ao carregar registros: ' + e.message, true));
+
+    // ===== FIRESTORE — OCORRÊNCIAS =====
+    const qOcorrencias = query(collection(db, 'controle_ocorrencias'), orderBy('mes', 'desc'));
+    onSnapshot(qOcorrencias, (snapshot) => {
+      todasOcorrencias = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      aplicarFiltrosOcorrencias();
+      atualizarResumo();
+    }, (e) => mostrarMensagemO('Erro ao carregar ocorrências: ' + e.message, true));
+
+    // ===== SALVAR UNIFORME =====
+    btnLimpar.addEventListener('click', () => limparFormulario());
     btnSalvar.addEventListener('click', async () => {
-      if (!usuarioAtual) {
-        mostrarMensagem('Faça login antes de salvar.', true);
-        return;
-      }
-
+      if (!usuarioAtual) { mostrarMensagem('Faça login antes de salvar.', true); return; }
       const funcionario = nomeFuncionario.value.trim();
       const data = dataRegistro.value;
       const status = statusUniforme.value;
       const obs = observacao.value.trim();
-
-      if (!funcionario) {
-        mostrarMensagem('Informe o nome do funcionário.', true);
-        return;
-      }
-
-      if (!data) {
-        mostrarMensagem('Informe a data do registro.', true);
-        return;
-      }
-
+      if (!funcionario) { mostrarMensagem('Informe o nome do funcionário.', true); return; }
+      if (!data) { mostrarMensagem('Informe a data do registro.', true); return; }
       try {
-        const funcionarioNormalizado = normalizarTexto(funcionario);
-        const docId = `${data}__${funcionarioNormalizado}`;
-
+        const docId = `${data}__${normalizarTexto(funcionario)}`;
         await setDoc(doc(db, 'controle_uniforme', docId), {
-          funcionario,
-          funcionario_normalizado: funcionarioNormalizado,
-          data,
-          status_uniforme: status,
-          observacao: obs,
+          funcionario, funcionario_normalizado: normalizarTexto(funcionario),
+          data, status_uniforme: status, observacao: obs,
           registrado_por_nome: usuarioAtual.displayName || usuarioAtual.email,
           registrado_por_email: usuarioAtual.email || '',
-          atualizado_em: new Date().toISOString(),
-          user_uid: usuarioAtual.uid
+          atualizado_em: new Date().toISOString(), user_uid: usuarioAtual.uid
         });
-
-        mostrarMensagem('Registro salvo com sucesso. Se já existia um registro para esta data e funcionário, ele foi atualizado.');
+        mostrarMensagem('Registro salvo com sucesso.');
         limparFormulario(false);
-      } catch (error) {
-        mostrarMensagem('Erro ao salvar: ' + error.message, true);
-      }
+      } catch (e) { mostrarMensagem('Erro ao salvar: ' + e.message, true); }
     });
 
+    // ===== SALVAR OCORRÊNCIA =====
+    btnLimparOcorrencia.addEventListener('click', limparFormOcorrencia);
+    btnSalvarOcorrencia.addEventListener('click', async () => {
+      if (!usuarioAtual) { mostrarMensagemO('Faça login antes de salvar.', true); return; }
+      const funcionario = nomeFunc_O.value.trim();
+      const mes = mesOcorrencia.value;
+      const atrasos = parseInt(qtdAtrasos.value) || 0;
+      const faltas = parseInt(qtdFaltas.value) || 0;
+      const obs = obsOcorrencia.value.trim();
+      if (!funcionario) { mostrarMensagemO('Informe o nome do funcionário.', true); return; }
+      if (!mes) { mostrarMensagemO('Informe o mês de referência.', true); return; }
+      try {
+        const docId = `${mes}__${normalizarTexto(funcionario)}`;
+        await setDoc(doc(db, 'controle_ocorrencias', docId), {
+          funcionario, funcionario_normalizado: normalizarTexto(funcionario),
+          mes, atrasos, faltas, observacao: obs,
+          registrado_por_nome: usuarioAtual.displayName || usuarioAtual.email,
+          registrado_por_email: usuarioAtual.email || '',
+          atualizado_em: new Date().toISOString(), user_uid: usuarioAtual.uid
+        });
+        mostrarMensagemO('Ocorrência salva com sucesso.');
+        limparFormOcorrencia(false);
+      } catch (e) { mostrarMensagemO('Erro ao salvar: ' + e.message, true); }
+    });
+
+    // ===== FILTROS UNIFORME =====
     filtroMes.addEventListener('change', () => {
-      if (filtroMes.value) {
-        definirPeriodoDoMes(filtroMes.value);
-      }
-      aplicarFiltros();
+      if (filtroMes.value) definirPeriodoDoMes(filtroMes.value);
+      aplicarFiltrosUniforme();
     });
-
-    btnAplicarFiltros.addEventListener('click', aplicarFiltros);
-
+    btnAplicarFiltros.addEventListener('click', aplicarFiltrosUniforme);
     btnLimparFiltros.addEventListener('click', () => {
       filtroMes.value = mesAtual;
       filtroFuncionario.value = '';
       filtroStatus.value = 'TODOS';
       definirPeriodoDoMes(mesAtual);
-      aplicarFiltros();
+      aplicarFiltrosUniforme();
+    });
+    filtroPeriodoInicio.addEventListener('change', aplicarFiltrosUniforme);
+    filtroPeriodoFim.addEventListener('change', aplicarFiltrosUniforme);
+    filtroFuncionario.addEventListener('input', aplicarFiltrosUniforme);
+    filtroStatus.addEventListener('change', aplicarFiltrosUniforme);
+
+    // ===== FILTROS OCORRÊNCIAS =====
+    btnAplicarFiltrosO.addEventListener('click', aplicarFiltrosOcorrencias);
+    filtroMesO.addEventListener('change', aplicarFiltrosOcorrencias);
+    filtroFuncO.addEventListener('input', aplicarFiltrosOcorrencias);
+    filtroTipoO.addEventListener('change', aplicarFiltrosOcorrencias);
+    btnLimparFiltrosO.addEventListener('click', () => {
+      filtroMesO.value = mesAtual;
+      filtroFuncO.value = '';
+      filtroTipoO.value = 'TODOS';
+      aplicarFiltrosOcorrencias();
     });
 
-    filtroPeriodoInicio.addEventListener('change', aplicarFiltros);
-    filtroPeriodoFim.addEventListener('change', aplicarFiltros);
-    filtroFuncionario.addEventListener('input', aplicarFiltros);
-    filtroStatus.addEventListener('change', aplicarFiltros);
-
-    onAuthStateChanged(auth, (user) => {
-      usuarioAtual = user;
-
-      if (user) {
-        btnLogin.style.display = 'none';
-        btnLogout.style.display = 'block';
-        userInfo.textContent = `Logado como: ${user.displayName || 'Usuário'} (${user.email || 'sem email'})`;
-      } else {
-        btnLogin.style.display = 'block';
-        btnLogout.style.display = 'none';
-        userInfo.textContent = 'Faça login para registrar e visualizar os dados.';
-      }
-
-      atualizarTabela();
+    // ===== FILTROS RESUMO =====
+    btnAplicarResumo.addEventListener('click', atualizarResumo);
+    btnLimparResumo.addEventListener('click', () => {
+      filtroMesResumo.value = mesAtual;
+      filtroFuncResumo.value = '';
+      atualizarResumo();
     });
 
-    const q = query(collection(db, 'controle_uniforme'), orderBy('data', 'desc'));
-    onSnapshot(q, (snapshot) => {
-      todosRegistros = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      aplicarFiltros();
-    }, (error) => {
-      mostrarMensagem('Erro ao carregar registros: ' + error.message, true);
-    });
-
-    function aplicarFiltros() {
-      atualizarTabela();
-      atualizarMetricas();
+    // ===== FUNÇÕES UNIFORME =====
+    function aplicarFiltrosUniforme() {
+      atualizarTabelaUniforme();
+      atualizarMetricasUniforme();
       atualizarBadgeData();
     }
 
@@ -569,75 +926,54 @@
       const inicio = filtroPeriodoInicio.value || '';
       const fim = filtroPeriodoFim.value || '';
       const status = filtroStatus.value;
-      const funcionarioFiltro = normalizarTexto(filtroFuncionario.value || '');
-
+      const funcFiltro = normalizarTexto(filtroFuncionario.value || '');
       return todosRegistros.filter(item => {
         const dentroInicio = !inicio || item.data >= inicio;
         const dentroFim = !fim || item.data <= fim;
         const statusOk = status === 'TODOS' || item.status_uniforme === status;
-        const funcionarioOk =
-          !funcionarioFiltro ||
-          normalizarTexto(item.funcionario || '').includes(funcionarioFiltro);
-
-        return dentroInicio && dentroFim && statusOk && funcionarioOk;
+        const funcOk = !funcFiltro || normalizarTexto(item.funcionario || '').includes(funcFiltro);
+        return dentroInicio && dentroFim && statusOk && funcOk;
       });
     }
 
-    function atualizarTabela() {
-      const registrosFiltrados = obterRegistrosFiltrados();
-
-      if (!registrosFiltrados.length) {
+    function atualizarTabelaUniforme() {
+      const registros = obterRegistrosFiltrados();
+      if (!registros.length) {
         tabelaRegistros.innerHTML = '<tr><td colspan="6" class="empty">Nenhum registro encontrado.</td></tr>';
         return;
       }
-
       const podeExcluir = usuarioAtual?.email?.toLowerCase() === EMAIL_ADMIN_EXCLUSAO;
-
-      tabelaRegistros.innerHTML = registrosFiltrados.map(item => {
+      tabelaRegistros.innerHTML = registros.map(item => {
         const classeStatus = `status-${item.status_uniforme.toLowerCase()}`;
         const botaoExcluir = podeExcluir
-          ? `<button class="btn-danger" onclick="window.excluirRegistro('${item.id}')">Excluir</button>`
-          : `<button class="btn-secondary" disabled title="Somente ${EMAIL_ADMIN_EXCLUSAO} pode excluir.">Sem permissão</button>`;
-
-        return `
-          <tr>
-            <td>${escapeHtml(item.funcionario || '-')}</td>
-            <td>${formatarData(item.data)}</td>
-            <td><span class="status ${classeStatus}">${formatarStatus(item.status_uniforme)}</span></td>
-            <td>${escapeHtml(item.observacao || '-')}</td>
-            <td>${escapeHtml(item.registrado_por_nome || item.registrado_por_email || '-')}</td>
-            <td>
-              <div class="actions">
-                ${botaoExcluir}
-              </div>
-            </td>
-          </tr>
-        `;
+          ? `<button class="btn-danger" onclick="window.excluirRegistroUniforme('${item.id}')">Excluir</button>`
+          : `<button class="btn-secondary" disabled title="Sem permissão">Sem permissão</button>`;
+        return `<tr>
+          <td>${escapeHtml(item.funcionario || '-')}</td>
+          <td>${formatarData(item.data)}</td>
+          <td><span class="status ${classeStatus}">${formatarStatus(item.status_uniforme)}</span></td>
+          <td>${escapeHtml(item.observacao || '-')}</td>
+          <td>${escapeHtml(item.registrado_por_nome || item.registrado_por_email || '-')}</td>
+          <td><div class="actions">${botaoExcluir}</div></td>
+        </tr>`;
       }).join('');
     }
 
-    function atualizarMetricas() {
-      const registrosFiltrados = obterRegistrosFiltrados();
-      const completo = registrosFiltrados.filter(item => item.status_uniforme === 'COMPLETO').length;
-      const incompleto = registrosFiltrados.filter(item => item.status_uniforme === 'INCOMPLETO').length;
-      const semUniforme = registrosFiltrados.filter(item => item.status_uniforme === 'SEM_UNIFORME').length;
-
-      totalCompleto.textContent = completo;
-      totalIncompleto.textContent = incompleto;
-      totalSemUniforme.textContent = semUniforme;
-
-      const agrupadoPorDia = new Map();
-      registrosFiltrados.forEach(item => {
-        if (!agrupadoPorDia.has(item.data)) agrupadoPorDia.set(item.data, []);
-        agrupadoPorDia.get(item.data).push(item);
+    function atualizarMetricasUniforme() {
+      const registros = obterRegistrosFiltrados();
+      totalCompleto.textContent = registros.filter(i => i.status_uniforme === 'COMPLETO').length;
+      totalIncompleto.textContent = registros.filter(i => i.status_uniforme === 'INCOMPLETO').length;
+      totalSemUniforme.textContent = registros.filter(i => i.status_uniforme === 'SEM_UNIFORME').length;
+      const porDia = new Map();
+      registros.forEach(item => {
+        if (!porDia.has(item.data)) porDia.set(item.data, []);
+        porDia.get(item.data).push(item);
       });
-
-      const dias = Array.from(agrupadoPorDia.keys()).sort();
-      const diasComMeta = dias.filter(data => {
-        const registrosDia = agrupadoPorDia.get(data);
-        return registrosDia.length > 0 && registrosDia.every(r => r.status_uniforme === 'COMPLETO');
+      const dias = Array.from(porDia.keys()).sort();
+      const diasComMeta = dias.filter(d => {
+        const r = porDia.get(d);
+        return r.length > 0 && r.every(x => x.status_uniforme === 'COMPLETO');
       }).length;
-
       diasMetaCompleta.textContent = diasComMeta;
       totalDiasAnalisados.textContent = dias.length;
       mesReferencia.textContent = filtroMes.value ? formatarMesAno(filtroMes.value) : '-';
@@ -646,16 +982,203 @@
     function atualizarBadgeData() {
       const inicio = filtroPeriodoInicio.value ? formatarData(filtroPeriodoInicio.value) : '-';
       const fim = filtroPeriodoFim.value ? formatarData(filtroPeriodoFim.value) : '-';
-      const funcionario = filtroFuncionario.value?.trim()
-        ? ` | Funcionário: ${filtroFuncionario.value.trim()}`
-        : '';
-
-      dataAtualPainel.textContent = `Período: ${inicio} até ${fim}${funcionario}`;
+      const func = filtroFuncionario.value?.trim() ? ` | ${filtroFuncionario.value.trim()}` : '';
+      dataAtualPainel.textContent = `Período: ${inicio} até ${fim}${func}`;
     }
+
+    // ===== FUNÇÕES OCORRÊNCIAS =====
+    function obterOcorrenciasFiltradas() {
+      const mes = filtroMesO.value || '';
+      const funcFiltro = normalizarTexto(filtroFuncO.value || '');
+      const tipo = filtroTipoO.value;
+      return todasOcorrencias.filter(item => {
+        const mesOk = !mes || item.mes === mes;
+        const funcOk = !funcFiltro || normalizarTexto(item.funcionario || '').includes(funcFiltro);
+        let tipoOk = true;
+        if (tipo === 'COM_ATRASO') tipoOk = (item.atrasos || 0) > 0;
+        else if (tipo === 'COM_FALTA') tipoOk = (item.faltas || 0) > 0;
+        else if (tipo === 'COM_AMBOS') tipoOk = (item.atrasos || 0) > 0 && (item.faltas || 0) > 0;
+        return mesOk && funcOk && tipoOk;
+      });
+    }
+
+    function aplicarFiltrosOcorrencias() {
+      atualizarTabelaOcorrencias();
+      atualizarMetricasOcorrencias();
+    }
+
+    function atualizarTabelaOcorrencias() {
+      const ocorrencias = obterOcorrenciasFiltradas();
+      if (!ocorrencias.length) {
+        tabelaOcorrencias.innerHTML = '<tr><td colspan="7" class="empty">Nenhuma ocorrência encontrada.</td></tr>';
+        return;
+      }
+      const podeExcluir = usuarioAtual?.email?.toLowerCase() === EMAIL_ADMIN_EXCLUSAO;
+      tabelaOcorrencias.innerHTML = ocorrencias.map(item => {
+        const atrasos = item.atrasos || 0;
+        const faltas = item.faltas || 0;
+        const badgeA = atrasos > 0
+          ? `<span class="badge badge-atraso">⏰ ${atrasos}</span>`
+          : `<span class="badge badge-zero">0</span>`;
+        const badgeF = faltas > 0
+          ? `<span class="badge badge-falta">✗ ${faltas}</span>`
+          : `<span class="badge badge-zero">0</span>`;
+        const botaoExcluir = podeExcluir
+          ? `<button class="btn-danger" onclick="window.excluirOcorrencia('${item.id}')">Excluir</button>`
+          : `<button class="btn-secondary" disabled>Sem permissão</button>`;
+        return `<tr>
+          <td>${escapeHtml(item.funcionario || '-')}</td>
+          <td>${formatarMesAno(item.mes)}</td>
+          <td>${badgeA}</td>
+          <td>${badgeF}</td>
+          <td>${escapeHtml(item.observacao || '-')}</td>
+          <td>${escapeHtml(item.registrado_por_nome || item.registrado_por_email || '-')}</td>
+          <td><div class="actions">${botaoExcluir}</div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function atualizarMetricasOcorrencias() {
+      const ocorrencias = obterOcorrenciasFiltradas();
+      const somaA = ocorrencias.reduce((s, i) => s + (i.atrasos || 0), 0);
+      const somaF = ocorrencias.reduce((s, i) => s + (i.faltas || 0), 0);
+      const comOcorrencia = ocorrencias.filter(i => (i.atrasos || 0) > 0 || (i.faltas || 0) > 0).length;
+      totalAtrasos.textContent = somaA;
+      totalFaltas.textContent = somaF;
+      totalFuncOcorrencias.textContent = comOcorrencia;
+      pillMesO.textContent = filtroMesO.value ? `Mês: ${formatarMesAno(filtroMesO.value)}` : 'Todos os meses';
+    }
+
+    // ===== RESUMO CONSOLIDADO =====
+    function atualizarResumo() {
+      const mesFiltro = filtroMesResumo.value || mesAtual;
+      const funcFiltro = normalizarTexto(filtroFuncResumo.value || '');
+      pillMesResumo.textContent = mesFiltro ? `Mês: ${formatarMesAno(mesFiltro)}` : '-';
+
+      // Coletar período do mês para uniforme
+      const [ano, mes] = mesFiltro.split('-').map(Number);
+      const inicioMes = `${mesFiltro}-01`;
+      const ultimoDia = new Date(ano, mes, 0).getDate();
+      const fimMes = `${mesFiltro}-${String(ultimoDia).padStart(2, '0')}`;
+
+      // Uniforme filtrado pelo mês
+      const uniformesMes = todosRegistros.filter(i => i.data >= inicioMes && i.data <= fimMes);
+      // Ocorrências filtradas pelo mês
+      const ocorrenciasMes = todasOcorrencias.filter(i => i.mes === mesFiltro);
+
+      // Consolidar por funcionário normalizado
+      const mapa = new Map();
+
+      uniformesMes.forEach(item => {
+        const key = normalizarTexto(item.funcionario || '');
+        if (!mapa.has(key)) mapa.set(key, { nome: item.funcionario, completo: 0, incompleto: 0, sem_uniforme: 0, atrasos: 0, faltas: 0, obs: '' });
+        const entry = mapa.get(key);
+        if (item.status_uniforme === 'COMPLETO') entry.completo++;
+        else if (item.status_uniforme === 'INCOMPLETO') entry.incompleto++;
+        else if (item.status_uniforme === 'SEM_UNIFORME') entry.sem_uniforme++;
+      });
+
+      ocorrenciasMes.forEach(item => {
+        const key = normalizarTexto(item.funcionario || '');
+        if (!mapa.has(key)) mapa.set(key, { nome: item.funcionario, completo: 0, incompleto: 0, sem_uniforme: 0, atrasos: 0, faltas: 0, obs: '' });
+        const entry = mapa.get(key);
+        entry.atrasos = item.atrasos || 0;
+        entry.faltas = item.faltas || 0;
+        entry.obs = item.observacao || '';
+      });
+
+      // Filtrar por nome
+      let entradas = Array.from(mapa.entries());
+      if (funcFiltro) {
+        entradas = entradas.filter(([key]) => key.includes(funcFiltro));
+      }
+      entradas.sort((a, b) => a[1].nome.localeCompare(b[1].nome));
+
+      const totalA = entradas.reduce((s, [, v]) => s + v.atrasos, 0);
+      const totalF = entradas.reduce((s, [, v]) => s + v.faltas, 0);
+      resumoTotalFunc.textContent = entradas.length;
+      resumoTotalAtrasos.textContent = totalA;
+      resumoTotalFaltas.textContent = totalF;
+
+      if (!entradas.length) {
+        tabelaResumo.innerHTML = '<tr><td colspan="7" class="empty">Nenhum dado encontrado para este período.</td></tr>';
+        return;
+      }
+
+      const maxA = Math.max(...entradas.map(([, v]) => v.atrasos), 1);
+      const maxF = Math.max(...entradas.map(([, v]) => v.faltas), 1);
+
+      tabelaResumo.innerHTML = entradas.map(([, v]) => {
+        const barA = Math.round((v.atrasos / maxA) * 80);
+        const barF = Math.round((v.faltas / maxF) * 80);
+        return `<tr>
+          <td><strong>${escapeHtml(v.nome)}</strong></td>
+          <td><span class="badge" style="background:#dcfce7;color:#166534;">${v.completo}</span></td>
+          <td><span class="badge" style="background:#fef9c3;color:#854d0e;">${v.incompleto}</span></td>
+          <td><span class="badge" style="background:#fee2e2;color:#991b1b;">${v.sem_uniforme}</span></td>
+          <td>
+            <div class="ranking-bar-wrap">
+              <div class="ranking-bar bar-atraso" style="width:${barA}px;"></div>
+              <span class="badge badge-atraso">⏰ ${v.atrasos}</span>
+            </div>
+          </td>
+          <td>
+            <div class="ranking-bar-wrap">
+              <div class="ranking-bar bar-falta" style="width:${barF}px;"></div>
+              <span class="badge badge-falta">✗ ${v.faltas}</span>
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--muted);">${escapeHtml(v.obs || '-')}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ===== EXCLUSÃO =====
+    window.excluirRegistroUniforme = async function(id) {
+      if (usuarioAtual?.email?.toLowerCase() !== EMAIL_ADMIN_EXCLUSAO) {
+        mostrarMensagem(`Somente ${EMAIL_ADMIN_EXCLUSAO} pode excluir.`, true); return;
+      }
+      if (!confirm('Deseja realmente excluir este registro?')) return;
+      try {
+        await deleteDoc(doc(db, 'controle_uniforme', id));
+        mostrarMensagem('Registro excluído com sucesso.');
+      } catch (e) { mostrarMensagem('Erro ao excluir: ' + e.message, true); }
+    };
+
+    window.excluirOcorrencia = async function(id) {
+      if (usuarioAtual?.email?.toLowerCase() !== EMAIL_ADMIN_EXCLUSAO) {
+        mostrarMensagemO(`Somente ${EMAIL_ADMIN_EXCLUSAO} pode excluir.`, true); return;
+      }
+      if (!confirm('Deseja realmente excluir esta ocorrência?')) return;
+      try {
+        await deleteDoc(doc(db, 'controle_ocorrencias', id));
+        mostrarMensagemO('Ocorrência excluída com sucesso.');
+      } catch (e) { mostrarMensagemO('Erro ao excluir: ' + e.message, true); }
+    };
+
+    // ===== UTILITÁRIOS =====
+    window.ajustarNumero = function(id, delta) {
+      const el = document.getElementById(id);
+      const val = parseInt(el.value) || 0;
+      el.value = Math.max(0, val + delta);
+    };
+
+    window.mudarAba = function(aba) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + aba).classList.add('active');
+      event.target.classList.add('active');
+      if (aba === 'resumo') atualizarResumo();
+    };
 
     function mostrarMensagem(texto, erro = false) {
       formMessage.textContent = texto;
       formMessage.className = 'message ' + (erro ? 'error' : 'ok');
+    }
+
+    function mostrarMensagemO(texto, erro = false) {
+      formMessageO.textContent = texto;
+      formMessageO.className = 'message ' + (erro ? 'error' : 'ok');
     }
 
     function limparFormulario(limparData = true) {
@@ -663,6 +1186,14 @@
       statusUniforme.value = 'COMPLETO';
       observacao.value = '';
       if (limparData) dataRegistro.value = hojeIso;
+    }
+
+    function limparFormOcorrencia(limparMes = true) {
+      nomeFunc_O.value = '';
+      qtdAtrasos.value = 0;
+      qtdFaltas.value = 0;
+      obsOcorrencia.value = '';
+      if (limparMes) mesOcorrencia.value = mesAtual;
     }
 
     function formatarStatus(valor) {
@@ -681,54 +1212,26 @@
     function formatarMesAno(valor) {
       if (!valor) return '-';
       const [ano, mes] = valor.split('-');
-      const nomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
       return `${nomes[Number(mes) - 1] || mes}/${ano}`;
     }
 
     function definirPeriodoDoMes(valorMes) {
       if (!valorMes) return;
       const [ano, mes] = valorMes.split('-').map(Number);
-      const inicio = new Date(ano, mes - 1, 1);
-      const fim = new Date(ano, mes, 0);
-      filtroPeriodoInicio.value = inicio.toISOString().split('T')[0];
-      filtroPeriodoFim.value = fim.toISOString().split('T')[0];
+      filtroPeriodoInicio.value = new Date(ano, mes - 1, 1).toISOString().split('T')[0];
+      filtroPeriodoFim.value = new Date(ano, mes, 0).toISOString().split('T')[0];
     }
 
     function normalizarTexto(texto) {
-      return String(texto || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '');
+      return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
     }
 
     function escapeHtml(texto) {
-      return String(texto)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      return String(texto).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
-
-    window.excluirRegistro = async function(id) {
-      const emailAtual = usuarioAtual?.email?.toLowerCase() || '';
-      if (emailAtual !== EMAIL_ADMIN_EXCLUSAO) {
-        mostrarMensagem(`Somente ${EMAIL_ADMIN_EXCLUSAO} pode excluir lançamentos.`, true);
-        return;
-      }
-
-      const confirmar = confirm('Deseja realmente excluir este registro?');
-      if (!confirmar) return;
-
-      try {
-        await deleteDoc(doc(db, 'controle_uniforme', id));
-        mostrarMensagem('Registro excluído com sucesso.');
-      } catch (error) {
-        mostrarMensagem('Erro ao excluir: ' + error.message, true);
-      }
-    };
   </script>
 </body>
 </html>
